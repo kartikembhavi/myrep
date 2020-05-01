@@ -1,0 +1,69 @@
+trigger ContactSumTrigger on Contact (After insert,After update, After delete, After undelete) {
+    Set<Id> parentIdsSet = new Set<Id>();
+    List<Account> accountListToUpdate = new List<Account>();
+    IF(Trigger.IsAfter){
+        IF(Trigger.IsInsert || Trigger.IsUndelete || Trigger.isupdate){
+            FOR(Contact c : Trigger.new){
+                if(c.AccountId!=null)// || (Trigger.newMap.get(c.Id).AccountId==null && Trigger.oldMap.get(c.Id).AccountId!= Trigger.newMap.get(c.Id).AccountId))
+                {   
+                   parentIdsSet.add(c.AccountId); 
+                }
+            
+        }
+        }
+            
+     
+            
+            
+        }
+       IF(Trigger.isdelete )
+         {
+            FOR(Contact c : Trigger.Old){
+                if(c.AccountId!=null) {
+                {
+                   parentIdsSet.add(c.AccountId); 
+                }
+            }
+            } 
+         }
+            
+             IF(Trigger.isupdate)
+         {
+            FOR(Contact c : Trigger.Old){
+                if(c.AccountId!=null) {
+                {
+                   parentIdsSet.add(c.AccountId); 
+                }
+            }
+            } 
+                FOR(Contact c1 : Trigger.new){
+                if(Trigger.oldMap.get(c1.Id).AccountId!= Trigger.newMap.get(c1.Id).AccountId){
+                    if(Trigger.newMap.get(c1.Id).AccountId==null){
+                        if(parentIdsSet.contains(Trigger.oldMap.get(c1.Id).AccountId)){
+                            parentIdsSet.remove(c1.AccountId);
+                        }
+                    }
+                }
+                  
+                }
+         }
+        
+    
+    System.debug('#### parentIdsSet = '+parentIdsSet);
+    List<Account> accountList = new List<Account>();
+    if(!parentIdsSet.isEmpty()){
+        accountList = new List<Account>([Select id ,Name, Number_of_Contacts__C, (Select id, Name From Contacts) from Account Where id in:parentIdsSet]);
+    }
+    System.debug('#### accountList = '+accountList);
+    FOR(Account acc : accountList){
+        List<Contact> contactList = acc.Contacts;
+        acc.Number_of_Contacts__C = contactList.size();
+        accountListToUpdate.add(acc);
+    }
+    try{
+        update accountListToUpdate;
+    }
+            catch(System.Exception e)
+            {}
+        
+        
