@@ -1,4 +1,4 @@
-trigger ContactSumTrigger on Contact (After insert,After update, After delete, After undelete) {
+trigger ContactNoTrigger on Contact (After insert,After update, After delete, After undelete) {
     Set<Id> parentIdsSet = new Set<Id>();
     List<Account> accountListToUpdate = new List<Account>();
     IF(Trigger.IsAfter){
