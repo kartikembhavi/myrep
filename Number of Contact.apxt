@@ -1,4 +1,4 @@
-trigger ContactNoTrigger on Contact (After insert,After update, After delete, After undelete) {
+trigger ContactSumTrigger on Contact (After insert,After update, After delete, After undelete) {
     Set<Id> parentIdsSet = new Set<Id>();
     List<Account> accountListToUpdate = new List<Account>();
     IF(Trigger.IsAfter){
@@ -16,7 +16,7 @@ trigger ContactNoTrigger on Contact (After insert,After update, After delete, Af
             
             
         }
-       IF(Trigger.isdelete )
+       IF(Trigger.isdelete||Trigger.isupdate )
          {
             FOR(Contact c : Trigger.Old){
                 if(c.AccountId!=null) {
@@ -27,37 +27,18 @@ trigger ContactNoTrigger on Contact (After insert,After update, After delete, Af
             } 
          }
             
-             IF(Trigger.isupdate)
-         {
-            FOR(Contact c : Trigger.Old){
-                if(c.AccountId!=null) {
-                {
-                   parentIdsSet.add(c.AccountId); 
-                }
-            }
-            } 
-                FOR(Contact c1 : Trigger.new){
-                if(Trigger.oldMap.get(c1.Id).AccountId!= Trigger.newMap.get(c1.Id).AccountId){
-                    if(Trigger.newMap.get(c1.Id).AccountId==null){
-                        if(parentIdsSet.contains(Trigger.oldMap.get(c1.Id).AccountId)){
-                            parentIdsSet.remove(c1.AccountId);
-                        }
-                    }
-                }
-                  
-                }
-         }
+            
         
     
     System.debug('#### parentIdsSet = '+parentIdsSet);
     List<Account> accountList = new List<Account>();
     if(!parentIdsSet.isEmpty()){
-        accountList = new List<Account>([Select id ,Name, Number_of_Contacts__C, (Select id, Name From Contacts) from Account Where id in:parentIdsSet]);
+        accountList = new List<Account>([Select id ,Name, no_of_contacts__c, (Select id, Name From Contacts) from Account Where id in:parentIdsSet]);
     }
     System.debug('#### accountList = '+accountList);
     FOR(Account acc : accountList){
         List<Contact> contactList = acc.Contacts;
-        acc.Number_of_Contacts__C = contactList.size();
+        acc.no_of_contacts__c = contactList.size();
         accountListToUpdate.add(acc);
     }
     try{
@@ -67,3 +48,5 @@ trigger ContactNoTrigger on Contact (After insert,After update, After delete, Af
             {}
         
         
+    
+}
